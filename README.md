@@ -1,4 +1,4 @@
-## Introduction to Gobang Game
+## Introduction
 
 This is a console-based Gobang (Five in a Row) game program. It provides a 15x15 board, supports player vs AI gameplay with different difficulty levels for the AI. The game implements an AI decision-making system based on the minimax algorithm, featuring core game logic such as board evaluation and win/loss determination. The program offers a user-friendly command-line interface for easy operation and game viewing, aiming to provide players with an entertaining and challenging Gobang game experience.
 
