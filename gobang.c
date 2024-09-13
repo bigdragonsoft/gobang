@@ -18,6 +18,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 
 #define BOARD_SIZE 15
 #define EMPTY 0
@@ -86,13 +87,21 @@ void printBoard() {
     // 打印列号
     printf("  ");
     for (int i = 0; i < BOARD_SIZE; i++) {
-        printf("%2d", i);
+        if (i < 10) {
+            printf("%2d", i);
+        } else {
+            printf("%2c", 'A' + (i - 10));
+        }
     }
     printf("\n");
 
     // 打印棋盘
     for (int i = 0; i < BOARD_SIZE; i++) {
-        printf("%2d", i);
+        if (i < 10) {
+            printf("%2d", i);
+        } else {
+            printf("%2c", 'A' + (i - 10));
+        }
         for (int j = 0; j < BOARD_SIZE; j++) {
             switch(board[i][j]) {
                 case EMPTY: printf(" ·"); break;
@@ -387,8 +396,33 @@ void playGame() {
                         return;  // 退出游戏
                     }
 
-                    if (sscanf(input, "%d %d", &row, &col) != 2) {
-                        printf("Invalid input, please enter two numbers.\n");
+                    char rowInput, colInput;
+                    if (sscanf(input, "%c %c", &rowInput, &colInput) != 2) {
+                        printf("Invalid input, please enter two characters.\n");
+                        continue;
+                    }
+
+                    // 将输入转换为大写
+                    rowInput = toupper(rowInput);
+                    colInput = toupper(colInput);
+
+                    // 处理行输入
+                    if (rowInput >= '0' && rowInput <= '9') {
+                        row = rowInput - '0';
+                    } else if (rowInput >= 'A' && rowInput <= 'E') {
+                        row = 10 + (rowInput - 'A');
+                    } else {
+                        printf("Invalid row coordinate, please try again.\n");
+                        continue;
+                    }
+
+                    // 处理列输入
+                    if (colInput >= '0' && colInput <= '9') {
+                        col = colInput - '0';
+                    } else if (colInput >= 'A' && colInput <= 'E') {
+                        col = 10 + (colInput - 'A');
+                    } else {
+                        printf("Invalid column coordinate, please try again.\n");
                         continue;
                     }
 
