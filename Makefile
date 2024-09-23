@@ -13,3 +13,6 @@ gobang.o: gobang.c
 
 clean:
 	rm -f $(objects) $(name)
+
+run: $(name)
+	./$(name)

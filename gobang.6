@@ -1,0 +1,90 @@
+.TH GOBANG 6 "September 2024" "Version 0.1" "Game Manual"
+
+.SH NAME
+gobang \- Console-based Gomoku game
+
+.SH SYNOPSIS
+.B gobang
+[\fB\-v\fR | \fB\-h\fR]
+
+.SH DESCRIPTION
+.B gobang
+is a Gomoku game that runs in the console. Players can choose to play against another player or challenge an AI opponent with different difficulty levels. The game is played on a 15x15 board, with the goal of connecting five pieces horizontally, vertically, or diagonally.
+
+.SH OPTIONS
+.TP
+.BR \-v
+Display version information
+.TP
+.BR \-h
+Display help information
+
+.SH GAME MODES
+.TP
+.B 1. Two-Player Mode
+Two players take turns placing pieces on the board.
+.TP
+.B 2. Player vs. AI
+Player competes against AI, with selectable AI difficulty levels.
+
+.SH AI DIFFICULTY LEVELS
+.TP
+.B Easy
+AI uses shallow search depth, suitable for beginners.
+.TP
+.B Medium
+AI uses moderate search depth, providing a suitable challenge for most players.
+.TP
+.B Hard
+AI uses deep search depth, offering a high-level challenge for experienced players.
+
+.SH CONTROLS
+Players place pieces by inputting row and column coordinates. The coordinate format is "row column", e.g., "7 8" or "A B".
+Row coordinates range from 0-9 and A-E, column coordinates range from 0-9 and A-E.
+Enter 'q' or 'Q' to quit the game at any time.
+
+.SH GAME INTERFACE
+The game interface is presented in the console using ASCII characters. The board consists of a 15x15 grid, with '·' representing intersections.
+Black pieces are represented by '●', and white pieces by '○'. The board edges are labeled with coordinates for easy player reference.
+
+Here's an example of a game board in progress:
+
+   0 1 2 3 4 5 6 7 8 9 A B C D E
+ 0 · · · · · · · · · · · · · · ·
+ 1 · · · · · · · · · · · · · · ·
+ 2 · · · ● · · · · · · · · · · ·
+ 3 · · · · ○ · · · · · · · · · ·
+ 4 · · · · · ● · · · · · · · · ·
+ 5 · · · · · · ○ · · · · · · · ·
+ 6 · · · · · · · · · · · · · · ·
+ 7 · · · · · · · · · · · · · · ·
+ 8 · · · · · · · · · · · · · · ·
+ 9 · · · · · · · · · · · · · · ·
+ A · · · · · · · · · · · · · · ·
+ B · · · · · · · · · · · · · · ·
+ C · · · · · · · · · · · · · · ·
+ D · · · · · · · · · · · · · · ·
+ E · · · · · · · · · · · · · · ·
+
+
+.SH EXAMPLES
+.TP
+Start a new game:
+.B gobang
+.TP
+View version information:
+.B gobang -v
+.TP
+View help information:
+.B gobang -h
+
+.SH AUTHOR
+Qiang Guo <bigdragonsoft@gmail.com>
+
+.SH COPYRIGHT
+Copyright (C) 2024 BigDragonSoft (bigdragonsoft.com)
+
+
+.SH BUGS
+If you find any bugs or have suggestions for improvements, please visit the project's GitHub page to submit an issue:
+.BR https://github.com/bigdragonsoft/gobang

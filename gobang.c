@@ -37,6 +37,9 @@
 #define HARD_DEPTH 4
 
 #define VERSION "0.1"
+#define AUTHOR "Qiang Guo"
+#define EMAIL "bigdragonsoft@gmail.com"
+#define WEBSITE "https://github.com/bigdragonsoft/gobang"
 
 int board[BOARD_SIZE][BOARD_SIZE] = {0};
 
@@ -481,9 +484,27 @@ int main(int argc, char *argv[]) {
     if (argc > 1) {
         if (strcmp(argv[1], "-v") == 0) {
             printf("Gobang Game Version %s\n", VERSION);
+            printf("Author: %s\n", AUTHOR);
+            printf("Email: %s\n", EMAIL);
+            printf("Website: %s\n", WEBSITE);
+            printf("Copyright (C) 2024 BigDragonSoft.com\n");
+            return 0;
+        } else if (strcmp(argv[1], "-h") == 0) {
+            printf("Gobang Game\n\n");
+            printf("This is a console-based Five in a Row game. Main features include:\n");
+            printf("1. 15x15 game board\n");
+            printf("2. Support for player vs player or player vs AI\n");
+            printf("3. Three difficulty levels for AI\n");
+            printf("4. AI decision-making using minimax algorithm\n");
+            printf("5. User-friendly command-line interface\n\n");
+            printf("Usage:\n");
+            printf("  ./gobang         Start the game\n");
+            printf("  ./gobang -v      Display version information\n");
+            printf("  ./gobang -h      Display this help information\n");
+            printf("\nFor more information, please use 'man gobang' to view the game manual page\n");
             return 0;
         } else {
-            printf("Unknown parameter. Use -v to view version information.\n");
+            printf("Unknown parameter. \nUse -h to view help information, or -v to view version information.\n");
             return 1;
         }
     }
