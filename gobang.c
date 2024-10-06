@@ -9,7 +9,15 @@
  * 4. 具有棋局评估、胜负判定等核心游戏逻辑
  * 5. 提供友好的命令行界面，方便玩家操作和查看棋局
  * 
- * 本程序旨在为玩家提供一个有趣且具有挑战性的五子棋游戏体验。
+ * Gobang Game
+ * Copyright (C) 2024 [bigdragonsoft.com]
+ * This is a console-based Gobang game, with main features including:
+ * 1. Providing a 15x15 board for players and AI to compete
+ * 2. Supporting player vs AI matches, with AI having different difficulty levels to choose from
+ * 3. Implementing an AI decision-making system based on the minimax algorithm
+ * 4. Possessing core game logic such as board evaluation and win/loss determination
+ * 5. Offering a user-friendly command-line interface for easy player operation and game viewing
+ * 
  */
 
 #include <stdio.h>
@@ -36,7 +44,7 @@
 #define MEDIUM_DEPTH 3
 #define HARD_DEPTH 4
 
-#define VERSION "0.1"
+#define VERSION "0.1.1"
 #define AUTHOR "Qiang Guo"
 #define EMAIL "bigdragonsoft@gmail.com"
 #define WEBSITE "https://github.com/bigdragonsoft/gobang"
