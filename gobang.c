@@ -44,7 +44,7 @@
 #define MEDIUM_DEPTH 3
 #define HARD_DEPTH 4
 
-#define VERSION "0.1.1"
+#define VERSION "0.1.2"
 #define AUTHOR "Qiang Guo"
 #define EMAIL "bigdragonsoft@gmail.com"
 #define WEBSITE "https://github.com/bigdragonsoft/gobang"
@@ -52,6 +52,8 @@
 int board[BOARD_SIZE][BOARD_SIZE] = {0};
 
 int AI_DEPTH = MEDIUM_DEPTH;  // 默认中等难度
+
+int gameMode = 0;  // 0: 未设置, 1: 双人模式, 2: 人机模式
 
 /**
  * @brief 初始化棋盘
@@ -73,27 +75,29 @@ void initBoard() {
  */
 void printBoard() {
     int boardWidth = BOARD_SIZE * 2 + 2;  // 棋盘的宽度（每个格子占2个字符，加上行号）
-    const char *titleText[2] = {"GOBANG", VERSION};
-    int titleWidth = strlen(titleText[0]) + strlen(titleText[1]) + 1;  // +1 for the space between
-    int borderWidth = titleWidth + 4;  // 添加左右各两个'='
+    const char *titleText = "Gobang Game";
+    int titleWidth = strlen(titleText);
+    int versionWidth = strlen(VERSION);
+    int totalWidth = titleWidth > boardWidth ? titleWidth : boardWidth;
 
     // 打印标题
     printf("\n");
     
     // 上边框
-    printf("%*s", (boardWidth - borderWidth) / 2, "");
-    for (int i = 0; i < borderWidth; i++) printf("-");
+    printf("%*s", (totalWidth - titleWidth) / 2, "");
+    for (int i = 0; i < titleWidth; i++) printf("-");
     printf("\n");
     
     // 标题文字
-    printf("%*s", (boardWidth - titleWidth) / 2, "");
-    printf("%s v%s", titleText[0], titleText[1]);
-    printf("\n");
+    printf("%*s%s\n", (totalWidth - titleWidth) / 2, "", titleText);
     
     // 下边框
-    printf("%*s", (boardWidth - borderWidth) / 2, "");
-    for (int i = 0; i < borderWidth; i++) printf("-");
-    printf("\n\n");
+    printf("%*s", (totalWidth - titleWidth) / 2, "");
+    for (int i = 0; i < titleWidth; i++) printf("-");
+    printf("\n");
+
+    // 版本号
+    printf("%*sv%s\n\n", (totalWidth - versionWidth) / 2, "", VERSION);
 
     // 打印列号
     printf("  ");
@@ -121,6 +125,23 @@ void printBoard() {
             }
         }
         printf("\n");
+    }
+
+    // 在棋盘下方显示AI难度
+    if (gameMode == 2) {
+        switch (AI_DEPTH) {
+            case EASY_DEPTH:
+                printf("\nAI Difficulty Easy\n");
+                break;
+            case MEDIUM_DEPTH:
+                printf("\nAI Difficulty Medium\n");
+                break;
+            case HARD_DEPTH:
+                printf("\nAI Difficulty Hard\n");
+                break;
+            default:
+                printf("\nAI Difficulty Unknown\n");
+        }
     }
 }
 
@@ -351,18 +372,34 @@ void playGame() {
     int currentPlayer = BLACK;
     int row, col;
     int moves = 0;
-    int gameMode;
     char playAgain;
 
-    printf("Select game mode:\n1. Two Players\n2. Player vs AI\n");
-    scanf("%d", &gameMode);
-    while (getchar() != '\n');  // 清除输入缓冲区
+    // 如果游戏模式未预设,则询问用户
+    if (gameMode == 0) {
+        do {
+            printf("Select game mode:\n1. Player vs Player\n2. Player vs AI\n");
+            if (scanf("%d", &gameMode) != 1 || (gameMode != 1 && gameMode != 2)) {
+                printf("Invalid choice, please try again.\n");
+                while (getchar() != '\n');  // 清除输入缓冲区
+                gameMode = 0;  // 重置gameMode
+            } else {
+                while (getchar() != '\n');  // 清除输入缓冲区
+            }
+        } while (gameMode == 0);
+    }
 
     if (gameMode == 2) {
-        printf("Select AI difficulty:\n1. Easy\n2. Medium\n3. Hard\n");
-        int difficulty;
-        scanf("%d", &difficulty);
-        while (getchar() != '\n');  // 清除输入缓冲区
+        int difficulty = 0;
+        do {
+            printf("Select AI difficulty:\n1. Easy\n2. Medium\n3. Hard\n");
+            if (scanf("%d", &difficulty) != 1 || difficulty < 1 || difficulty > 3) {
+                printf("Invalid choice, please try again.\n");
+                while (getchar() != '\n');  // 清除输入缓冲区
+                difficulty = 0;  // 重置difficulty
+            } else {
+                while (getchar() != '\n');  // 清除输入缓冲区
+            }
+        } while (difficulty == 0);
 
         switch (difficulty) {
             case 1:
@@ -374,9 +411,6 @@ void playGame() {
             case 3:
                 AI_DEPTH = HARD_DEPTH;
                 break;
-            default:
-                printf("Invalid choice, using default difficulty (Medium).\n");
-                AI_DEPTH = MEDIUM_DEPTH;
         }
     }
 
@@ -394,7 +428,7 @@ void playGame() {
                 int validMove = 0;
                 while (!validMove) {
                     printf("Player %s\n", currentPlayer == BLACK ? "Black" : "White");
-                    printf("Enter move position (row column), or 'q' to quit: ");
+                    printf("Enter move position, or 'q' to quit: ");
                     char input[10];
                     if (fgets(input, sizeof(input), stdin) == NULL) {
                         printf("Input error, please try again.\n");
@@ -509,10 +543,23 @@ int main(int argc, char *argv[]) {
             printf("  ./gobang         Start the game\n");
             printf("  ./gobang -v      Display version information\n");
             printf("  ./gobang -h      Display this help information\n");
+            printf("  ./gobang -2      Start the game in player vs player mode\n");
+            printf("  ./gobang -1      Start the game in player vs AI mode\n");
             printf("\nFor more information, please use 'man gobang' to view the game manual page\n");
             return 0;
+        } else if (strcmp(argv[1], "-2") == 0) {
+            // 直接进入双人模式
+            gameMode = 1;
+            playGame();
+            return 0;
+        } else if (strcmp(argv[1], "-1") == 0) {
+            // 直接进入人机对战模式
+            gameMode = 2;
+            AI_DEPTH = MEDIUM_DEPTH;  // 默认使用中等难度
+            playGame();
+            return 0;
         } else {
-            printf("Unknown parameter. \nUse -h to view help information, or -v to view version information.\n");
+            printf("Unknown parameter.\nUse -h to view help information, or -v to view version information.\n");
             return 1;
         }
     }
