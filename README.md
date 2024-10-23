@@ -15,3 +15,13 @@ This is a console-based Gobang (Five in a Row) game program. It provides a 15x15
 2. Players take turns placing stones on empty intersections of the board
 3. The first player to form an unbroken line of five stones horizontally, vertically, or diagonally wins
 4. If the board is filled without a winner, the game is declared a draw
+
+## Usage
+```
+Usage: gobang [option]
+Options:
+    -1      Start the game in player vs AI mode
+    -2      Start the game in player vs player mode
+    -v      Display version information
+    -h      Display help information
+```
