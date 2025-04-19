@@ -1,6 +1,6 @@
 /*
  * 五子棋游戏
- * 版权所有 (C) 2024 [大龙软件 bigdragonsoft.com]
+ * 版权所有 (C) 2024~2025 [大龙软件 bigdragonsoft.com]
  * 
  * 这是一个在控制台中运行的五子棋游戏，主要功能包括：
  * 1. 提供一个15x15的棋盘供玩家和AI对弈
@@ -10,7 +10,7 @@
  * 5. 提供友好的命令行界面，方便玩家操作和查看棋局
  * 
  * Gobang Game
- * Copyright (C) 2024 [bigdragonsoft.com]
+ * Copyright (C) 2024~2025 [bigdragonsoft.com]
  * This is a console-based Gobang game, with main features including:
  * 1. Providing a 15x15 board for players and AI to compete
  * 2. Supporting player vs AI matches, with AI having different difficulty levels to choose from
@@ -44,16 +44,24 @@
 #define MEDIUM_DEPTH 3
 #define HARD_DEPTH 4
 
-#define VERSION "0.1.2"
+#define VERSION "0.1.3"
 #define AUTHOR "Qiang Guo"
 #define EMAIL "bigdragonsoft@gmail.com"
 #define WEBSITE "https://github.com/bigdragonsoft/gobang"
 
-int board[BOARD_SIZE][BOARD_SIZE] = {0};
+int board[BOARD_SIZE][BOARD_SIZE] = {{0}};
+
+// 记录获胜的五子位置
+int winningPositions[5][2] = {{-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}};
+int hasWinner = 0;  // 标记是否有获胜者
 
 int AI_DEPTH = MEDIUM_DEPTH;  // 默认中等难度
 
 int gameMode = 0;  // 0: 未设置, 1: 双人模式, 2: 人机模式
+
+// 记录最后落子的位置
+int lastMoveRow = -1;
+int lastMoveCol = -1;
 
 /**
  * @brief 初始化棋盘
@@ -118,10 +126,37 @@ void printBoard() {
             printf("%2c", 'A' + (i - 10));
         }
         for (int j = 0; j < BOARD_SIZE; j++) {
-            switch(board[i][j]) {
-                case EMPTY: printf(" ·"); break;
-                case BLACK: printf(" ●"); break;  // 黑子用实心圆
-                case WHITE: printf(" ○"); break;  // 白子用空心圆
+            // 检查是否是获胜位置
+            int isWinningPosition = 0;
+            if (hasWinner) {
+                for (int w = 0; w < 5; w++) {
+                    if (winningPositions[w][0] == i && winningPositions[w][1] == j) {
+                        isWinningPosition = 1;
+                        break;
+                    }
+                }
+            }
+            
+            if (isWinningPosition) {
+                // 获胜位置使用闪烁高亮显示（红色）
+                switch(board[i][j]) {
+                    case EMPTY: printf(" \033[1;31m·\033[0m"); break;
+                    case BLACK: printf(" \033[1;31m●\033[0m"); break;  // 黑子用实心圆（红色高亮）
+                    case WHITE: printf(" \033[1;31m○\033[0m"); break;  // 白子用空心圆（红色高亮）
+                }
+            } else if (i == lastMoveRow && j == lastMoveCol) {
+                // 最后落子的位置使用黄色高亮显示
+                switch(board[i][j]) {
+                    case EMPTY: printf(" \033[1;33m·\033[0m"); break;
+                    case BLACK: printf(" \033[1;33m●\033[0m"); break;  // 黑子用实心圆（黄色高亮）
+                    case WHITE: printf(" \033[1;33m○\033[0m"); break;  // 白子用空心圆（黄色高亮）
+                }
+            } else {
+                switch(board[i][j]) {
+                    case EMPTY: printf(" ·"); break;
+                    case BLACK: printf(" ●"); break;  // 黑子用实心圆
+                    case WHITE: printf(" ○"); break;  // 白子用空心圆
+                }
             }
         }
         printf("\n");
@@ -158,6 +193,11 @@ int checkWin(int row, int col) {
     
     for (int d = 0; d < 4; d++) {
         int count = 1;
+        int positions[9][2]; // 最多可能有9个连续棋子（双向各4个加中心点）
+        positions[0][0] = row;
+        positions[0][1] = col;
+        int posCount = 1;
+        
         // 向一个方向检查
         for (int i = 1; i <= 4; i++) {
             int newRow = row + directions[d][0] * i;
@@ -165,6 +205,9 @@ int checkWin(int row, int col) {
             if (newRow < 0 || newRow >= BOARD_SIZE || newCol < 0 || newCol >= BOARD_SIZE || board[newRow][newCol] != player) {
                 break;
             }
+            positions[posCount][0] = newRow;
+            positions[posCount][1] = newCol;
+            posCount++;
             count++;
         }
         // 向相反方向检查
@@ -174,9 +217,21 @@ int checkWin(int row, int col) {
             if (newRow < 0 || newRow >= BOARD_SIZE || newCol < 0 || newCol >= BOARD_SIZE || board[newRow][newCol] != player) {
                 break;
             }
+            positions[posCount][0] = newRow;
+            positions[posCount][1] = newCol;
+            posCount++;
             count++;
         }
-        if (count >= 5) return 1;
+        if (count >= 5) {
+            // 找到五子连珠，记录位置
+            hasWinner = 1;
+            // 只记录前5个位置
+            for (int i = 0; i < 5 && i < posCount; i++) {
+                winningPositions[i][0] = positions[i][0];
+                winningPositions[i][1] = positions[i][1];
+            }
+            return 1;
+        }
     }
     return 0;
 }
@@ -364,6 +419,67 @@ void makeAIMove(int* row, int* col) {
 }
 
 /**
+ * @brief AI帮助玩家下棋
+ * 
+ * 使用极小化极大算法为玩家选择最佳落子位置
+ */
+void makeAIHelpMove(int player, int* row, int* col) {
+    int bestScore = NEG_INF;
+    int bestRow = -1, bestCol = -1;
+    
+    // 检查棋盘是否为空
+    int boardEmpty = 1;
+    for (int i = 0; i < BOARD_SIZE && boardEmpty; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            if (board[i][j] != EMPTY) {
+                boardEmpty = 0;
+                break;
+            }
+        }
+    }
+    
+    // 如果棋盘为空，选择中央位置或附近
+    if (boardEmpty) {
+        // 棋盘中央位置及周围的位置
+        int center = BOARD_SIZE / 2;
+        bestRow = center + (rand() % 3 - 1); // 中央位置加减1范围内随机选择
+        bestCol = center + (rand() % 3 - 1);
+    } else {
+        // 原有的落子逻辑
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if (board[i][j] == EMPTY && inSearchRange(i, j)) {
+                    board[i][j] = player;
+                    int score = minimax(AI_DEPTH - 1, NEG_INF, INF, player == WHITE);
+                    board[i][j] = EMPTY;
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestRow = i;
+                        bestCol = j;
+                    }
+                }
+            }
+        }
+    }
+    
+    // 确保bestRow和bestCol有有效值
+    if (bestRow == -1 || bestCol == -1) {
+        // 如果没有找到合适的位置，随机选择一个空位置
+        do {
+            bestRow = rand() % BOARD_SIZE;
+            bestCol = rand() % BOARD_SIZE;
+        } while (board[bestRow][bestCol] != EMPTY);
+    }
+    
+    board[bestRow][bestCol] = player;
+    printf("AI helps placed a move at (%d, %d)\n", bestRow, bestCol);
+    
+    *row = bestRow;
+    *col = bestCol;
+}
+
+/**
  * @brief 主游戏循环
  * 
  * 控制游戏的主要流程，包括玩家和电脑的回合
@@ -419,6 +535,15 @@ void playGame() {
         initBoard();
         moves = 0;
         currentPlayer = BLACK;
+        // 重置最后落子位置
+        lastMoveRow = -1;
+        lastMoveCol = -1;
+        // 重置获胜状态
+        hasWinner = 0;
+        for (int i = 0; i < 5; i++) {
+            winningPositions[i][0] = -1;
+            winningPositions[i][1] = -1;
+        }
 
         while (1) {
             system("clear");
@@ -426,10 +551,12 @@ void playGame() {
             
             if (currentPlayer == BLACK || gameMode == 1) {
                 int validMove = 0;
+                char input[10] = {0};  // 将input变量声明移到外层作用域
+                
                 while (!validMove) {
                     printf("Player %s\n", currentPlayer == BLACK ? "Black" : "White");
-                    printf("Enter move position, or 'q' to quit: ");
-                    char input[10];
+                    printf("Enter move position, or 'q' to quit, or '?' for AI help: ");
+                    
                     if (fgets(input, sizeof(input), stdin) == NULL) {
                         printf("Input error, please try again.\n");
                         continue;
@@ -439,6 +566,16 @@ void playGame() {
                     if (input[0] == 'q' || input[0] == 'Q') {
                         printf("Game over.\n");
                         return;  // 退出游戏
+                    }
+
+                    // 检查是否输入了 '?'
+                    if (input[0] == '?') {
+                        makeAIHelpMove(currentPlayer, &row, &col);
+                        validMove = 1;
+                        // 更新最后落子位置
+                        lastMoveRow = row;
+                        lastMoveCol = col;
+                        break;
                     }
 
                     char rowInput, colInput;
@@ -477,19 +614,68 @@ void playGame() {
                     }
 
                     validMove = 1;
+                    // 更新最后落子位置
+                    lastMoveRow = row;
+                    lastMoveCol = col;
                 }
 
-                board[row][col] = currentPlayer;
+                // 如果是AI帮助落子，则已经在makeAIHelpMove函数中设置了棋盘
+                // 否则，我们需要在这里设置棋盘
+                if (input[0] != '?') {
+                    board[row][col] = currentPlayer;
+                }
             } else {
                 makeAIMove(&row, &col);
+                // 更新最后落子位置
+                lastMoveRow = row;
+                lastMoveCol = col;
             }
 
             moves++;
 
-            system("clear");
-            printBoard();
+            // 实现落子闪烁效果
+            for (int i = 0; i < 3; i++) {  // 闪烁3次
+                system("clear");
+                printBoard();
+                usleep(200000);  // 暂停200毫秒
+                
+                // 暂时取消高亮
+                int tempRow = lastMoveRow;
+                int tempCol = lastMoveCol;
+                lastMoveRow = -1;
+                lastMoveCol = -1;
+                
+                system("clear");
+                printBoard();
+                usleep(200000);  // 暂停200毫秒
+                
+                // 恢复高亮
+                lastMoveRow = tempRow;
+                lastMoveCol = tempCol;
+            }
 
             if (checkWin(row, col)) {
+                // 获胜者闪烁效果
+                for (int flash = 0; flash < 5; flash++) {
+                    // 显示获胜位置
+                    system("clear");
+                    printBoard();
+                    usleep(300000);  // 暂停300毫秒
+                    
+                    // 暂时隐藏获胜位置
+                    int tempHasWinner = hasWinner;
+                    hasWinner = 0;
+                    
+                    system("clear");
+                    printBoard();
+                    usleep(300000);  // 暂停300毫秒
+                    
+                    // 恢复获胜位置
+                    hasWinner = tempHasWinner;
+                }
+                
+                system("clear");
+                printBoard();
                 if (gameMode == 2 && currentPlayer == WHITE) {
                     printf("AI wins!\n");
                 } else {
@@ -499,6 +685,8 @@ void playGame() {
             }
 
             if (moves == BOARD_SIZE * BOARD_SIZE) {
+                system("clear");
+                printBoard();
                 printf("It's a draw!\n");
                 break;
             }
@@ -529,7 +717,7 @@ int main(int argc, char *argv[]) {
             printf("Author: %s\n", AUTHOR);
             printf("Email: %s\n", EMAIL);
             printf("Website: %s\n", WEBSITE);
-            printf("Copyright (C) 2024 BigDragonSoft.com\n");
+            printf("Copyright (C) 2024~2025 BigDragonSoft.com\n");
             return 0;
         } else if (strcmp(argv[1], "-h") == 0) {
             printf("Gobang Game\n\n");
